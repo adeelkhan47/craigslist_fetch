@@ -1,4 +1,6 @@
 import logging
+import requests
+from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO)
 
@@ -108,11 +110,24 @@ numbers_to_states = {
     "50": "Wyoming"
 }
 
+
+def fetch_for_sale_categories(url):
+
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    ul_element1 = soup.find("ul", id="sss0").find_all("li")
+    for each in ul_element1:
+        a_element = each.find("a")
+        print(a_element["href"])
+        print(a_element.text)
+    ul_element2 = soup.find("ul", id="sss0")
+
 print("Craigslist Bot is Here.")
 
 for a, b in numbers_to_states.items():
     print(f"{a} => {b}")
-choose_state = input("Choose state number : ")
+# choose_state = input("Choose state number : ")
+choose_state = "5"
 if choose_state in numbers_to_states.keys():
     if choose_state == "0":
         for state, state_url in state_to_url.items():
@@ -120,6 +135,7 @@ if choose_state in numbers_to_states.keys():
     else:
         selected_state = numbers_to_states[choose_state]
         selected_state_url = state_to_url[selected_state]
+        fetch_for_sale_categories(selected_state_url)
+        print(selected_state, selected_state_url)
 else:
     print("--------------------------------- Invalid Entry ---------------------------------")
-
