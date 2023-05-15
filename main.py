@@ -1,60 +1,68 @@
 import logging
+import math
+
 import requests
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+# Create a new instance of the Firefox driver
+from selenium.webdriver.support.wait import WebDriverWait
 
+driver = webdriver.Chrome()
 logging.basicConfig(level=logging.INFO)
-
-state_to_url = {
-    "Alabama": "https://auburn.craigslist.org/",
-    "Alaska": "https://anchorage.craigslist.org/",
-    "Arizona": "https://phoenix.craigslist.org/",
-    "Arkansas": "https://fayar.craigslist.org/",
-    "California": "https://sfbay.craigslist.org/",
-    "Colorado": "https://denver.craigslist.org/",
-    "Connecticut": "https://newhaven.craigslist.org/",
-    "Delaware": "https://delaware.craigslist.org/",
-    "Florida": "https://miami.craigslist.org/",
-    "Georgia": "https://atlanta.craigslist.org/",
-    "Hawaii": "https://honolulu.craigslist.org/",
-    "Idaho": "https://boise.craigslist.org/",
-    "Illinois": "https://chicago.craigslist.org/",
-    "Indiana": "https://indianapolis.craigslist.org/",
-    "Iowa": "https://desmoines.craigslist.org/",
-    "Kansas": "https://wichita.craigslist.org/",
-    "Kentucky": "https://lexington.craigslist.org/",
-    "Louisiana": "https://neworleans.craigslist.org/",
-    "Maine": "https://maine.craigslist.org/",
-    "Maryland": "https://baltimore.craigslist.org/",
-    "Massachusetts": "https://boston.craigslist.org/",
-    "Michigan": "https://detroit.craigslist.org/",
-    "Minnesota": "https://minneapolis.craigslist.org/",
-    "Mississippi": "https://jackson.craigslist.org/",
-    "Missouri": "https://stlouis.craigslist.org/",
-    "Montana": "https://montana.craigslist.org/",
-    "Nebraska": "https://omaha.craigslist.org/",
-    "Nevada": "https://lasvegas.craigslist.org/",
-    "New Hampshire": "https://nh.craigslist.org/",
-    "New Jersey": "https://cnj.craigslist.org/",
-    "New Mexico": "https://albuquerque.craigslist.org/",
-    "New York": "https://newyork.craigslist.org/",
-    "North Carolina": "https://raleigh.craigslist.org/",
-    "North Dakota": "https://nd.craigslist.org/",
-    "Ohio": "https://columbus.craigslist.org/",
-    "Oklahoma": "https://tulsa.craigslist.org/",
-    "Oregon": "https://portland.craigslist.org/",
-    "Pennsylvania": "https://pittsburgh.craigslist.org/",
-    "Rhode Island": "https://providence.craigslist.org/",
-    "South Carolina": "https://greenville.craigslist.org/",
-    "South Dakota": "https://sd.craigslist.org/",
-    "Tennessee": "https://nashville.craigslist.org/",
-    "Texas": "https://austin.craigslist.org/",
-    "Utah": "https://saltlakecity.craigslist.org/",
-    "Vermont": "https://vermont.craigslist.org/",
-    "Virginia": "https://richmond.craigslist.org/",
-    "Washington": "https://seattle.craigslist.org/",
-    "West Virginia": "https://charlestonwv.craigslist.org/",
-    "Wisconsin": "https://madison.craigslist.org/",
-    "Wyoming": "https://wyoming.craigslist.org/",
+wait = WebDriverWait(driver, 10)
+state_to_url = states_urls = {
+    "Alabama": "https://geo.craigslist.org/iso/us/al",
+    "Alaska": "https://geo.craigslist.org/iso/us/ak",
+    "Arizona": "https://geo.craigslist.org/iso/us/az",
+    "Arkansas": "https://geo.craigslist.org/iso/us/ar",
+    "California": "https://geo.craigslist.org/iso/us/ca",
+    "Colorado": "https://geo.craigslist.org/iso/us/co",
+    "Connecticut": "https://geo.craigslist.org/iso/us/ct",
+    "Delaware": "https://geo.craigslist.org/iso/us/de",
+    "Florida": "https://geo.craigslist.org/iso/us/fl",
+    "Georgia": "https://geo.craigslist.org/iso/us/ga",
+    "Hawaii": "https://geo.craigslist.org/iso/us/hi",
+    "Idaho": "https://geo.craigslist.org/iso/us/id",
+    "Illinois": "https://geo.craigslist.org/iso/us/il",
+    "Indiana": "https://geo.craigslist.org/iso/us/in",
+    "Iowa": "https://geo.craigslist.org/iso/us/ia",
+    "Kansas": "https://geo.craigslist.org/iso/us/ks",
+    "Kentucky": "https://geo.craigslist.org/iso/us/ky",
+    "Louisiana": "https://geo.craigslist.org/iso/us/la",
+    "Maine": "https://geo.craigslist.org/iso/us/me",
+    "Maryland": "https://geo.craigslist.org/iso/us/md",
+    "Massachusetts": "https://geo.craigslist.org/iso/us/ma",
+    "Michigan": "https://geo.craigslist.org/iso/us/mi",
+    "Minnesota": "https://geo.craigslist.org/iso/us/mn",
+    "Mississippi": "https://geo.craigslist.org/iso/us/ms",
+    "Missouri": "https://geo.craigslist.org/iso/us/mo",
+    "Montana": "https://geo.craigslist.org/iso/us/mt",
+    "Nebraska": "https://geo.craigslist.org/iso/us/ne",
+    "Nevada": "https://geo.craigslist.org/iso/us/nv",
+    "New Hampshire": "https://geo.craigslist.org/iso/us/nh",
+    "New Jersey": "https://geo.craigslist.org/iso/us/nj",
+    "New Mexico": "https://geo.craigslist.org/iso/us/nm",
+    "New York": "https://geo.craigslist.org/iso/us/ny",
+    "North Carolina": "https://geo.craigslist.org/iso/us/nc",
+    "North Dakota": "https://geo.craigslist.org/iso/us/nd",
+    "Ohio": "https://geo.craigslist.org/iso/us/oh",
+    "Oklahoma": "https://geo.craigslist.org/iso/us/ok",
+    "Oregon": "https://geo.craigslist.org/iso/us/or",
+    "Pennsylvania": "https://geo.craigslist.org/iso/us/pa",
+    "Rhode Island": "https://geo.craigslist.org/iso/us/ri",
+    "South Carolina": "https://geo.craigslist.org/iso/us/sc",
+    "South Dakota": "https://geo.craigslist.org/iso/us/sd",
+    "Tennessee": "https://geo.craigslist.org/iso/us/tn",
+    "Texas": "https://geo.craigslist.org/iso/us/tx",
+    "Utah": "https://geo.craigslist.org/iso/us/ut",
+    "Vermont": "https://geo.craigslist.org/iso/us/vt",
+    "Virginia": "https://geo.craigslist.org/iso/us/va",
+    "Washington": "https://geo.craigslist.org/iso/us/wa",
+    "West Virginia": "https://geo.craigslist.org/iso/us/wv",
+    "Wisconsin": "https://geo.craigslist.org/iso/us/wi",
+    "Wyoming": "https://geo.craigslist.org/iso/us/wy"
 }
 numbers_to_states = {
     "0": "All",
@@ -111,31 +119,120 @@ numbers_to_states = {
 }
 
 
-def fetch_for_sale_categories(url):
+def scrape_url(url):
+    data = []
+    driver.get(url + "#search=1~gallery~0~0")
+    span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
+    span_text = span_element.text
+    if span_text and "of" in span_text:
+        total_pages = span_text.split(" of ")[1]
+        page = math.ceil(int(total_pages) / 120)
+        for each in range(0, page):
+            driver.get(url + f"#search=1~gallery~{each}~0")
+            span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
+            list_of_items = driver.find_elements("css selector", "li.cl-search-result")
+            for item in list_of_items:
+                price = item.find_element("css selector", "span.priceinfo").text
+                print(price)
+                title = item.find_element("css selector", "a.titlestring").text
+                link = item.find_element("css selector", "a.titlestring").get_attribute("href")
+                image = item.find_element("css selector", "img").get_attribute("src")
+                data.append((title, price, link,image))
 
+    return data
+
+
+def fetch_for_sale_categories(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
+    sub_categories = {}
+    count = 1
+    sub_categories["0"] = ["all", "sss"]
+
     ul_element1 = soup.find("ul", id="sss0").find_all("li")
     for each in ul_element1:
         a_element = each.find("a")
-        print(a_element["href"])
-        print(a_element.text)
-    ul_element2 = soup.find("ul", id="sss0")
-
-print("Craigslist Bot is Here.")
-
-for a, b in numbers_to_states.items():
-    print(f"{a} => {b}")
-# choose_state = input("Choose state number : ")
-choose_state = "5"
-if choose_state in numbers_to_states.keys():
-    if choose_state == "0":
-        for state, state_url in state_to_url.items():
-            print(state, state_url)
+        sub_categories[str(count)] = [a_element.text, a_element["href"]]
+        count += 1
+    ul_element2 = soup.find("ul", id="sss1").find_all("li")
+    for each in ul_element2:
+        a_element = each.find("a")
+        sub_categories[str(count)] = [a_element.text, a_element["href"]]
+        count += 1
+    ###
+    for number, value in sub_categories.items():
+        print(f"{number} => {value[0]}")
+    # choose_category = input("\nChoose Category number : ")
+    choose_category = "0"
+    if choose_category == "0":
+        return ("0", "/search/sss")
+    elif choose_category in sub_categories.keys():
+        return (sub_categories[choose_category], sub_categories[choose_category][1])
     else:
-        selected_state = numbers_to_states[choose_state]
-        selected_state_url = state_to_url[selected_state]
-        fetch_for_sale_categories(selected_state_url)
-        print(selected_state, selected_state_url)
-else:
-    print("--------------------------------- Invalid Entry ---------------------------------")
+        return None
+
+
+def select_state():
+    for a, b in numbers_to_states.items():
+        print(f"{a} => {b}")
+    # choose_state = input("Choose state number : ")
+    choose_state = "5"
+
+    if choose_state in numbers_to_states.keys():
+        all_states = []
+        if choose_state == "0":
+            for state, state_url in state_to_url.items():
+                response = requests.get(state_url)
+                soup = BeautifulSoup(response.content, "html.parser")
+                ul_element_cities = soup.find("ul", class_="geo-site-list").find_all("li")
+                for each in ul_element_cities:
+                    link = each.find("a")["href"]
+                    text = each.find("a").text
+                    all_states.append((text, link))
+            return all_states
+        else:
+            selected_state = numbers_to_states[choose_state]
+            selected_state_url = state_to_url[selected_state]
+            response = requests.get(selected_state_url)
+            soup = BeautifulSoup(response.content, "html.parser")
+            ul_element_cities = soup.find("ul", class_="geo-site-list").find_all("li")
+            for each in ul_element_cities:
+                link = each.find("a")["href"]
+                text = each.find("a").text
+                all_states.append((text, link))
+        return all_states
+    else:
+        return None
+
+
+if __name__ == '__main__':
+    print("Craigslist Bot is Here.\n\n")
+    # keyword = input("Enter Keyword => ")
+    min_price = 1
+    max_price = 5000
+    keyword = "nike"
+    while True:
+        all_subcategory = False
+        selected_subcategory = None
+        selected_states = select_state()
+        if selected_states is None:
+            print("\nInvalid State Number Chosen.")
+        else:
+            for each in selected_states:
+                if not all_subcategory:
+                    selected_subcategory = fetch_for_sale_categories(each[1])
+                    all_subcategory = True
+                if selected_subcategory is None:
+                    print("\nInvalid SubCategory Number Chosen.")
+                else:
+                    generated_url = each[1] + selected_subcategory[1]
+
+                    generated_url += f"?hasPic=1&max_price={max_price}&min_price={min_price}"
+                    if keyword:
+                        generated_url += f"&query={keyword}"
+                    scraped_data = scrape_url(generated_url)
+                    print(scraped_data)
+            all_subcategory = False
+            selected_subcategory = None
+
+    # scrape_url("https://sfbay.craigslist.org/search/sss?hasPic=1&query=nike")
