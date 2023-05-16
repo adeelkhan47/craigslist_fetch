@@ -148,8 +148,8 @@ def scrape_url(url):
             driver.get(url + f"#search=1~gallery~{each}~0")
 
             span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
-            time.sleep(2)
-            images = wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, "img")))
+            time.sleep(4)
+            images = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "img")))
             list_of_items = driver.find_elements("css selector", "li.cl-search-result")
             for item in list_of_items:
                 try:
