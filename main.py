@@ -147,7 +147,7 @@ def scrape_url(url):
             no_results = driver.find_element("css selector", "p.no-results")
         except NoSuchElementException as nse:
             no_results = None
-        if (no_results is None) or (no_results and no_results.text):
+        if (no_results is None) or (no_results and no_results.text == ""):
             span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
             span_text = span_element.text
             if span_text and "of" in span_text:
