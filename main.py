@@ -13,7 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 # Create a new instance of the Firefox driver
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException,NoSuchElementException
 driver = webdriver.Chrome()
 logging.basicConfig(level=logging.INFO)
 wait = WebDriverWait(driver, 20)
@@ -140,7 +140,10 @@ def scrape_url(url):
     data = []
     try:
         driver.get(url + "#search=1~gallery~0~0")
-        no_results = driver.find_element("css selector", "p.no-results")
+        try:
+            no_results = driver.find_element("css selector", "p.no-results")
+        except NoSuchElementException as nse:
+            no_results = None
         if no_results is None:
             span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
             span_text = span_element.text
