@@ -250,6 +250,7 @@ if __name__ == '__main__':
     keyword = input("Enter Keyword => ")
     min_price = int(input("Enter min price =>"))
     max_price = int(input("Enter max price =>"))
+    print(max_price)
     program = True
     directory = get_directory()
     while program:
@@ -270,7 +271,8 @@ if __name__ == '__main__':
                     else:
                         generated_url = each[1] + selected_subcategory[1]
 
-                        generated_url += f"?hasPic=1&max_price={max_price}&min_price={min_price}"
+                        generated_url += f"?max_price={max_price}&min_price={min_price}"
+                        #generated_url += f"?hasPic=1&max_price={max_price}&min_price={min_price}"
                         if keyword:
                             generated_url += f"&query={keyword}"
                         scraped_data = scrape_url(generated_url)
@@ -291,5 +293,3 @@ if __name__ == '__main__':
             all_subcategory = False
             selected_subcategory = None
             program = False
-
-    # scrape_url("https://sfbay.craigslist.org/search/sss?hasPic=1&query=nike")
