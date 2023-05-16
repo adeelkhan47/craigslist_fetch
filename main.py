@@ -140,6 +140,7 @@ def scrape_url(url):
     data = []
     try:
         driver.get(url + "#search=1~gallery~0~0")
+        print(url + "#search=1~gallery~0~0")
         time.sleep(3)
         try:
             no_results = driver.find_element("css selector", "p.no-results")
