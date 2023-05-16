@@ -9,11 +9,12 @@ import requests
 from PIL import Image
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 # Create a new instance of the Firefox driver
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.common.exceptions import TimeoutException,NoSuchElementException
+
 driver = webdriver.Chrome()
 logging.basicConfig(level=logging.INFO)
 wait = WebDriverWait(driver, 20)
@@ -146,7 +147,7 @@ def scrape_url(url):
             no_results = driver.find_element("css selector", "p.no-results")
         except NoSuchElementException as nse:
             no_results = None
-        if no_results is None:
+        if (no_results is None) or (no_results and no_results.text):
             span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
             span_text = span_element.text
             if span_text and "of" in span_text:
@@ -155,7 +156,8 @@ def scrape_url(url):
                 for each in range(0, page):
                     driver.get(url + f"#search=1~gallery~{each}~0")
                     time.sleep(1.5)
-                    span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
+                    span_element = wait.until(
+                        EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
                     images = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "img")))
                     list_of_items = driver.find_elements("css selector", "li.cl-search-result")
                     for item in list_of_items:
@@ -285,7 +287,7 @@ if __name__ == '__main__':
                         generated_url = each[1] + selected_subcategory[1]
 
                         generated_url += f"?max_price={max_price}&min_price={min_price}"
-                        #generated_url += f"?hasPic=1&max_price={max_price}&min_price={min_price}"
+                        # generated_url += f"?hasPic=1&max_price={max_price}&min_price={min_price}"
                         if keyword:
                             generated_url += f"&query={keyword}"
                         scraped_data = scrape_url(generated_url)
