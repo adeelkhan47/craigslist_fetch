@@ -174,6 +174,7 @@ def scrape_url(url):
         return data
     except Exception as e:
         logging.exception(e)
+        return data
     except TimeoutException as te:
         no_result = driver.find_elements("css selector", "li.cl-search-result")
         return data
