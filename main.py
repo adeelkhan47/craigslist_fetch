@@ -151,7 +151,6 @@ def scrape_url(url):
                     driver.get(url + f"#search=1~gallery~{each}~0")
                     time.sleep(3)
                     span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
-
                     images = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "img")))
                     list_of_items = driver.find_elements("css selector", "li.cl-search-result")
                     for item in list_of_items:
@@ -214,7 +213,11 @@ def select_state():
                     all_states[state] = []
                 response = requests.get(state_url)
                 soup = BeautifulSoup(response.content, "html.parser")
-                ul_element_cities = soup.find("ul", class_="geo-site-list").find_all("li")
+                ul_element_cities = soup.find("ul", class_="geo-site-list")
+                if ul_element_cities:
+                    ul_element_cities = ul_element_cities.find_all("li")
+                else:
+                    ul_element_cities = []
                 for each in ul_element_cities:
                     link = each.find("a")["href"]
                     text = each.find("a").text
