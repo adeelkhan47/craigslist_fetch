@@ -1,7 +1,12 @@
 import logging
 import math
+import os
+import time
+from io import BytesIO
 
+import pandas as pd
 import requests
+from PIL import Image
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -11,7 +16,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 driver = webdriver.Chrome()
 logging.basicConfig(level=logging.INFO)
-wait = WebDriverWait(driver, 10)
+wait = WebDriverWait(driver, 20)
 state_to_url = states_urls = {
     "Alabama": "https://geo.craigslist.org/iso/us/al",
     "Alaska": "https://geo.craigslist.org/iso/us/ak",
@@ -119,6 +124,18 @@ numbers_to_states = {
 }
 
 
+def load_excel_images(directory, state_data):
+    for each_row in state_data:
+        if each_row["Image"]:
+            img_url = each_row['Image']
+            response = requests.get(img_url)
+            img = Image.open(BytesIO(response.content))
+            each_row['Image'] = img
+    df = pd.DataFrame(state_data)
+    with pd.ExcelWriter(os.path.join(directory, location)) as writer:
+        df.to_excel(writer, index=False)
+
+
 def scrape_url(url):
     data = []
     driver.get(url + "#search=1~gallery~0~0")
@@ -129,15 +146,21 @@ def scrape_url(url):
         page = math.ceil(int(total_pages) / 120)
         for each in range(0, page):
             driver.get(url + f"#search=1~gallery~{each}~0")
+
             span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
+            time.sleep(2)
+            images = wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, "img")))
             list_of_items = driver.find_elements("css selector", "li.cl-search-result")
             for item in list_of_items:
-                price = item.find_element("css selector", "span.priceinfo").text
-                print(price)
-                title = item.find_element("css selector", "a.titlestring").text
-                link = item.find_element("css selector", "a.titlestring").get_attribute("href")
-                image = item.find_element("css selector", "img").get_attribute("src")
-                data.append((title, price, link,image))
+                try:
+                    if item.text:
+                        price = item.find_element("css selector", "span.priceinfo").text
+                        title = item.find_element("css selector", "a.titlestring").text
+                        link = item.find_element("css selector", "a.titlestring").get_attribute("href")
+                        image = item.find_element("css selector", "img").get_attribute("src")
+                        data.append((title, price, link, image))
+                except Exception as e:
+                    logging.exception(e)
 
     return data
 
@@ -162,8 +185,8 @@ def fetch_for_sale_categories(url):
     ###
     for number, value in sub_categories.items():
         print(f"{number} => {value[0]}")
-    # choose_category = input("\nChoose Category number : ")
-    choose_category = "0"
+    choose_category = input("\nChoose Category number : ")
+    # choose_category = "0"
     if choose_category == "0":
         return ("0", "/search/sss")
     elif choose_category in sub_categories.keys():
@@ -175,20 +198,22 @@ def fetch_for_sale_categories(url):
 def select_state():
     for a, b in numbers_to_states.items():
         print(f"{a} => {b}")
-    # choose_state = input("Choose state number : ")
-    choose_state = "5"
+    choose_state = input("Choose state number : ")
+    # choose_state = "2"
 
     if choose_state in numbers_to_states.keys():
-        all_states = []
+        all_states = {}
         if choose_state == "0":
             for state, state_url in state_to_url.items():
+                if state not in all_states.keys():
+                    all_states[state] = []
                 response = requests.get(state_url)
                 soup = BeautifulSoup(response.content, "html.parser")
                 ul_element_cities = soup.find("ul", class_="geo-site-list").find_all("li")
                 for each in ul_element_cities:
                     link = each.find("a")["href"]
                     text = each.find("a").text
-                    all_states.append((text, link))
+                    all_states[state].append((text, link))
             return all_states
         else:
             selected_state = numbers_to_states[choose_state]
@@ -197,42 +222,74 @@ def select_state():
             soup = BeautifulSoup(response.content, "html.parser")
             ul_element_cities = soup.find("ul", class_="geo-site-list").find_all("li")
             for each in ul_element_cities:
+                if selected_state not in all_states.keys():
+                    all_states[selected_state] = []
                 link = each.find("a")["href"]
                 text = each.find("a").text
-                all_states.append((text, link))
+                all_states[selected_state].append((text, link))
         return all_states
     else:
         return None
 
 
+def get_directory():
+    base_directory = "Result"
+    counter = 0
+    directory_name = base_directory
+    if os.path.exists(directory_name):
+        while os.path.exists(directory_name):
+            counter += 1
+            directory_name = f"{base_directory}_{counter}"
+
+    os.makedirs(directory_name)
+    return directory_name
+
+
 if __name__ == '__main__':
     print("Craigslist Bot is Here.\n\n")
-    # keyword = input("Enter Keyword => ")
-    min_price = 1
-    max_price = 5000
-    keyword = "nike"
-    while True:
+    keyword = input("Enter Keyword => ")
+    min_price = int(input("Enter min price =>"))
+    max_price = int(input("Enter max price =>"))
+    program = True
+    directory = get_directory()
+    while program:
         all_subcategory = False
         selected_subcategory = None
         selected_states = select_state()
         if selected_states is None:
             print("\nInvalid State Number Chosen.")
         else:
-            for each in selected_states:
-                if not all_subcategory:
-                    selected_subcategory = fetch_for_sale_categories(each[1])
-                    all_subcategory = True
-                if selected_subcategory is None:
-                    print("\nInvalid SubCategory Number Chosen.")
-                else:
-                    generated_url = each[1] + selected_subcategory[1]
+            for state, state_cities in selected_states.items():
+                state_data = []
+                for each in state_cities:
+                    if not all_subcategory:
+                        selected_subcategory = fetch_for_sale_categories(each[1])
+                        all_subcategory = True
+                    if selected_subcategory is None:
+                        print("\nInvalid SubCategory Number Chosen.")
+                    else:
+                        generated_url = each[1] + selected_subcategory[1]
 
-                    generated_url += f"?hasPic=1&max_price={max_price}&min_price={min_price}"
-                    if keyword:
-                        generated_url += f"&query={keyword}"
-                    scraped_data = scrape_url(generated_url)
-                    print(scraped_data)
+                        generated_url += f"?hasPic=1&max_price={max_price}&min_price={min_price}"
+                        if keyword:
+                            generated_url += f"&query={keyword}"
+                        scraped_data = scrape_url(generated_url)
+                        for each_row in scraped_data:
+                            state_data.append(
+                                {"State": state, "City": each[0], "Image": f'=HYPERLINK("{each_row[3]}")',
+                                 "Title": each_row[0],
+                                 "Price": each_row[1], "Link": f'=HYPERLINK("{each_row[2]}")'})
+                        print(f"{each[0]} city is processed.")
+
+                df = pd.DataFrame(data=state_data)
+
+                location = f"{state}.xlsx"
+                df.to_excel(os.path.join(directory, location), index=False)
+                # load_excel_images(directory, state_data)
+                print(f"{state} Record Generated Successfully at {location}")
+
             all_subcategory = False
             selected_subcategory = None
+            program = False
 
     # scrape_url("https://sfbay.craigslist.org/search/sss?hasPic=1&query=nike")
