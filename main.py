@@ -165,7 +165,10 @@ def scrape_url(url):
                             price = item.find_element("css selector", "span.priceinfo").text
                             title = item.find_element("css selector", "a.titlestring").text
                             link = item.find_element("css selector", "a.titlestring").get_attribute("href")
-                            image = item.find_element("css selector", "img").get_attribute("src")
+                            try:
+                                image = item.find_element("css selector", "img").get_attribute("src")
+                            except Exception:
+                                image = None
                             data.append((title, price, link, image))
 
         return data
