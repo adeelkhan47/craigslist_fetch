@@ -13,7 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 # Create a new instance of the Firefox driver
 from selenium.webdriver.support.wait import WebDriverWait
-
+from selenium.common.exceptions import TimeoutException
 driver = webdriver.Chrome()
 logging.basicConfig(level=logging.INFO)
 wait = WebDriverWait(driver, 20)
@@ -138,31 +138,36 @@ def load_excel_images(directory, state_data):
 
 def scrape_url(url):
     data = []
-    driver.get(url + "#search=1~gallery~0~0")
-    span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
-    span_text = span_element.text
-    if span_text and "of" in span_text:
-        total_pages = span_text.split(" of ")[1]
-        page = math.ceil(int(total_pages) / 120)
-        for each in range(0, page):
-            driver.get(url + f"#search=1~gallery~{each}~0")
-
+    try:
+        driver.get(url + "#search=1~gallery~0~0")
+        no_results = driver.find_element("css selector", "p.no-results")
+        if no_results is None:
             span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
-            time.sleep(4)
-            images = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "img")))
-            list_of_items = driver.find_elements("css selector", "li.cl-search-result")
-            for item in list_of_items:
-                try:
-                    if item.text:
-                        price = item.find_element("css selector", "span.priceinfo").text
-                        title = item.find_element("css selector", "a.titlestring").text
-                        link = item.find_element("css selector", "a.titlestring").get_attribute("href")
-                        image = item.find_element("css selector", "img").get_attribute("src")
-                        data.append((title, price, link, image))
-                except Exception as e:
-                    logging.exception(e)
+            span_text = span_element.text
+            if span_text and "of" in span_text:
+                total_pages = span_text.split(" of ")[1]
+                page = math.ceil(int(total_pages) / 120)
+                for each in range(0, page):
+                    driver.get(url + f"#search=1~gallery~{each}~0")
 
-    return data
+                    span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
+                    time.sleep(4)
+                    images = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "img")))
+                    list_of_items = driver.find_elements("css selector", "li.cl-search-result")
+                    for item in list_of_items:
+                        try:
+                            if item.text:
+                                price = item.find_element("css selector", "span.priceinfo").text
+                                title = item.find_element("css selector", "a.titlestring").text
+                                link = item.find_element("css selector", "a.titlestring").get_attribute("href")
+                                image = item.find_element("css selector", "img").get_attribute("src")
+                                data.append((title, price, link, image))
+                        except Exception as e:
+                            logging.exception(e)
+        return data
+    except TimeoutException as te:
+        no_result = driver.find_elements("css selector", "li.cl-search-result")
+        return data
 
 
 def fetch_for_sale_categories(url):
