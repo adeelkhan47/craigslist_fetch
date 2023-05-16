@@ -155,16 +155,15 @@ def scrape_url(url):
                     images = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "img")))
                     list_of_items = driver.find_elements("css selector", "li.cl-search-result")
                     for item in list_of_items:
-                        try:
-                            if item.text:
-                                price = item.find_element("css selector", "span.priceinfo").text
-                                title = item.find_element("css selector", "a.titlestring").text
-                                link = item.find_element("css selector", "a.titlestring").get_attribute("href")
-                                image = item.find_element("css selector", "img").get_attribute("src")
-                                data.append((title, price, link, image))
-                        except Exception as e:
-                            logging.exception(e)
+                        if item.text:
+                            price = item.find_element("css selector", "span.priceinfo").text
+                            title = item.find_element("css selector", "a.titlestring").text
+                            link = item.find_element("css selector", "a.titlestring").get_attribute("href")
+                            image = item.find_element("css selector", "img").get_attribute("src")
+                            data.append((title, price, link, image))
         return data
+    except Exception as e:
+        logging.exception(e)
     except TimeoutException as te:
         no_result = driver.find_elements("css selector", "li.cl-search-result")
         return data
