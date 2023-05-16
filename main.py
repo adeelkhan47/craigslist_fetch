@@ -141,7 +141,7 @@ def scrape_url(url):
     try:
         driver.get(url + "#search=1~gallery~0~0")
         print(url + "#search=1~gallery~0~0")
-        time.sleep(3)
+        time.sleep(1.5)
         try:
             no_results = driver.find_element("css selector", "p.no-results")
         except NoSuchElementException as nse:
@@ -154,7 +154,7 @@ def scrape_url(url):
                 page = math.ceil(int(total_pages) / 120)
                 for each in range(0, page):
                     driver.get(url + f"#search=1~gallery~{each}~0")
-                    time.sleep(3)
+                    time.sleep(1.5)
                     span_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.cl-page-number")))
                     images = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "img")))
                     list_of_items = driver.find_elements("css selector", "li.cl-search-result")
