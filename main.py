@@ -152,7 +152,7 @@ def scrape_url(url):
             span_text = span_element.text
             if span_text and "of" in span_text:
                 total_pages = span_text.split(" of ")[1]
-                page = math.ceil(int(total_pages) / 120)
+                page = math.ceil(int(total_pages.replace(",", "")) / 120)
                 for each in range(0, page):
                     driver.get(url + f"#search=1~gallery~{each}~0")
                     time.sleep(3)
