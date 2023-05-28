@@ -289,7 +289,8 @@ if __name__ == '__main__':
                         print("\nInvalid SubCategory Number Chosen.")
                     else:
                         generated_url = each[1] + selected_subcategory[1]
-
+                        if "newyork" in generated_url:
+                            print("he")
                         generated_url += f"?max_price={max_price}&min_price={min_price}"
                         # generated_url += f"?hasPic=1&max_price={max_price}&min_price={min_price}"
                         if keyword:
