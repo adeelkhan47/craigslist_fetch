@@ -9,11 +9,12 @@ import requests
 from PIL import Image
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, InvalidArgumentException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 # Create a new instance of the Firefox driver
 from selenium.webdriver.support.wait import WebDriverWait
+
 
 driver = webdriver.Chrome()
 logging.basicConfig(level=logging.INFO)
@@ -141,6 +142,7 @@ def scrape_url(url):
     data = []
     try:
         print(url + "#search=1~gallery~0~0")
+
         driver.get(url + "#search=1~gallery~0~0")
         time.sleep(3)
         try:
@@ -172,6 +174,8 @@ def scrape_url(url):
                             data.append((title, price, link, image))
 
         return data
+    except InvalidArgumentException as badUrl:
+        logging.info("broken.")
     except Exception as e:
         logging.exception(e)
         return data
