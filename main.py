@@ -165,8 +165,8 @@ def scrape_url(url):
                     for item in list_of_items:
                         if item.text:
                             price = item.find_element("css selector", "span.priceinfo").text
-                            title = item.find_element("css selector", "a.titlestring").text
-                            link = item.find_element("css selector", "a.titlestring").get_attribute("href")
+                            title = item.find_element("css selector", "a.posting-title").text
+                            link = item.find_element("css selector", "a.posting-title").get_attribute("href")
                             try:
                                 image = item.find_element("css selector", "img").get_attribute("src")
                             except Exception:
